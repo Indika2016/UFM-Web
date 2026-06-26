@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 // ⚙️  GITHUB CONFIG — fill in your own values
 // ─────────────────────────────────────────────────────────────────────────────
 const GH_TOKEN  = "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";        // Personal Access Token
-const GH_OWNER  = "Indika2016may@gmail.com";         // e.g. "johnsmith"
+const GH_OWNER  = "Indika2016";         // e.g. "johnsmith"
 const GH_REPO   = "UFM-Web";               // e.g. "bakery-calculator"
 const GH_FILE   = "recipes_db.json";              // file path in repo root
 const GH_BRANCH = "main";
