@@ -3,9 +3,9 @@ import { useState, useCallback, useRef, useEffect } from "react";
 // ─────────────────────────────────────────────────────────────────────────────
 // ⚙️  GITHUB CONFIG — fill in your own values
 // ─────────────────────────────────────────────────────────────────────────────
-const GH_TOKEN  = "YOUR_GITHUB_PAT_HERE";        // Personal Access Token
-const GH_OWNER  = "YOUR_GITHUB_USERNAME";         // e.g. "johnsmith"
-const GH_REPO   = "YOUR_REPO_NAME";               // e.g. "bakery-calculator"
+const GH_TOKEN  = "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";        // Personal Access Token
+const GH_OWNER  = "indika2016";         // e.g. "johnsmith"
+const GH_REPO   = "UFM-Web";               // e.g. "bakery-calculator"
 const GH_FILE   = "recipes_db.json";              // file path in repo root
 const GH_BRANCH = "main";
 // ─────────────────────────────────────────────────────────────────────────────
