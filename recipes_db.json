@@ -1,1 +1,95 @@
-{}
+{
+  "Cake exam recipe 01- indika": {
+    "dataset": [
+      [
+        "Dough",
+        "Flour",
+        "100",
+        "19.72",
+        "177.48"
+      ],
+      [
+        "Dough",
+        "Water",
+        "93.6",
+        "18.46",
+        "166.12"
+      ],
+      [
+        "Dough",
+        "Sugar",
+        "120",
+        "23.66",
+        "212.98"
+      ],
+      [
+        "Dough",
+        "Shortening",
+        "80",
+        "15.78",
+        "141.98"
+      ],
+      [
+        "Dough",
+        "MSNF",
+        "1.4",
+        "0.28",
+        "2.48"
+      ],
+      [
+        "Dough",
+        "Salt",
+        "1.2",
+        "0.24",
+        "2.13"
+      ],
+      [
+        "Dough",
+        "Vanilla flavor",
+        "0.5",
+        "0.1",
+        "0.89"
+      ],
+      [
+        "Dough",
+        "Chocolate flavor",
+        "1",
+        "0.2",
+        "1.77"
+      ],
+      [
+        "Dough",
+        "Coco powder",
+        "20",
+        "3.94",
+        "35.5"
+      ],
+      [
+        "Dough",
+        "Baking soda",
+        "1.4",
+        "0.28",
+        "2.48"
+      ],
+      [
+        "Dough",
+        "Whole egg",
+        "88",
+        "17.35",
+        "156.18"
+      ]
+    ],
+    "top_totals": {
+      "weight": "900",
+      "flour": "177.48",
+      "water": "166.12"
+    },
+    "bottom_totals": {
+      "bakers": "507.1",
+      "true": "100.01",
+      "weight": "899.99"
+    },
+    "savedBy": "admin",
+    "savedAt": "2026-06-26T16:36:13.008Z"
+  }
+}
