@@ -1,8 +1,5 @@
 import { useState, useCallback, useRef } from "react";
 
-// ── Design tokens ────────────────────────────────────────────────────────────
-// Palette: deep navy bg, warm cream text, cyan accent, amber highlight
-// Aesthetic: professional bakery data tool — clean grid, monospaced numerics
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -136,30 +133,58 @@ const CSS = `
   .autocal-row { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
   .autocal-row input[type=checkbox] { accent-color: var(--cyan); width:14px; height:14px; }
 
+  /* TOTALS BAR — responsive: stacks on mobile, row on desktop */
   .totals-bar {
-    display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:8px;
     background: var(--surface2); border-radius:8px; padding:10px 12px; margin-bottom:14px;
+  }
+  @media(min-width:480px) {
+    .totals-bar { grid-template-columns: repeat(3,1fr); }
   }
   .total-cell { display:flex; flex-direction:column; gap:3px; }
   .total-cell label { font-size:10px; color:var(--muted); letter-spacing:.5px; font-weight:600; }
   .total-cell input {
     padding:6px 8px; border-radius:5px; border:1px solid var(--border);
     background:var(--surface); color:var(--text); font-family:var(--mono); font-size:13px; outline:none;
-    transition: border-color .15s;
+    transition: border-color .15s; width:100%;
   }
   .total-cell input:focus { border-color: var(--cyan); }
   .total-cell input[readonly] { color:var(--cyan); background:rgba(0,200,255,.06); }
 
+  /* SECTION HEADER — extra col for delete button */
   .section-hdr {
-    display:grid; grid-template-columns:2fr 1fr 1fr 1fr;
+    display:grid; grid-template-columns:2fr 1fr 1fr 1fr 28px;
     padding:6px 8px; background:var(--surface2); border-radius:6px; margin-bottom:6px;
     font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.5px; gap:4px;
   }
-  .ing-row {
-    display:grid; grid-template-columns:2fr 1fr 1fr 1fr;
-    gap:4px; margin-bottom:4px; align-items:center;
+
+  /* INGREDIENT ROW */
+  .ing-outer {
+    position:relative; overflow:hidden; border-radius:6px; margin-bottom:4px;
   }
-  .ing-name { font-size:13px; font-weight:500; padding:0 4px; }
+  .ing-row {
+    display:grid; grid-template-columns:2fr 1fr 1fr 1fr 28px;
+    gap:4px; align-items:center;
+    background:var(--bg); border-radius:6px;
+    position:relative; z-index:1;
+  }
+  .ing-name-wrap {
+    display:flex; align-items:center; overflow:hidden; padding:0 2px;
+  }
+  .ing-name {
+    font-size:13px; font-weight:500; padding:0 2px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    cursor:pointer; user-select:none; flex:1;
+  }
+  .ing-name-edit {
+    font-size:13px; font-weight:500; flex:1;
+    background:transparent; border:none;
+    border-bottom:1px solid var(--cyan); color:var(--cyan);
+    outline:none; font-family:var(--sans); padding:0 2px;
+    min-width:0;
+  }
   .ing-input {
     padding:6px 6px; border-radius:5px; border:1px solid var(--border);
     background:var(--surface2); color:var(--text); font-family:var(--mono);
@@ -167,6 +192,17 @@ const CSS = `
   }
   .ing-input:focus { border-color:var(--cyan); }
   .ing-input.error-field { border-color:var(--red); background:rgba(224,82,82,.08); }
+
+  /* DELETE ICON */
+  .del-btn {
+    background:none; border:none; color:transparent;
+    font-size:13px; cursor:pointer; padding:3px;
+    border-radius:4px; width:28px; text-align:center;
+    transition: color .15s, background .15s;
+    flex-shrink:0;
+  }
+  .ing-outer:hover .del-btn { color: rgba(224,82,82,.45); }
+  .del-btn:hover { color: var(--red) !important; background:rgba(224,82,82,.12); }
 
   .summary-row {
     display:grid; grid-template-columns:2fr 1fr 1fr 1fr;
@@ -200,6 +236,26 @@ const CSS = `
   .preview-table th { background:var(--surface2); padding:6px 8px; text-align:center; font-size:11px; color:var(--muted); font-weight:700; }
   .preview-table td { padding:6px 8px; text-align:center; border-bottom:1px solid var(--border); font-family:var(--mono); }
 
+  /* ADMIN PASSWORD PROMPT */
+  .admin-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,.75);
+    display:flex; align-items:center; justify-content:center; z-index:200; padding:16px;
+  }
+  .admin-card {
+    background:var(--surface); border:1px solid var(--red);
+    border-radius:12px; padding:24px; width:100%; max-width:320px;
+  }
+  .admin-title { font-size:15px; font-weight:700; color:var(--red); margin-bottom:6px; }
+  .admin-sub   { font-size:12px; color:var(--muted); margin-bottom:14px; line-height:1.5; }
+  .admin-input {
+    width:100%; padding:9px 12px; border-radius:7px; border:1px solid var(--border);
+    background:var(--surface2); color:var(--text); font-family:var(--mono);
+    font-size:14px; outline:none; margin-bottom:6px; transition:border-color .15s;
+  }
+  .admin-input:focus { border-color:var(--red); }
+  .admin-err { font-size:11px; color:var(--red); min-height:16px; margin-bottom:8px; }
+  .admin-btns { display:flex; gap:8px; }
+
   @media(max-width:600px) {
     .grid-2x2 { grid-template-columns:1fr; }
     .modal { max-width:100%; }
@@ -207,12 +263,19 @@ const CSS = `
   }
 `;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const f = (v, d = 0) => { const n = parseFloat(v); return isNaN(n) ? d : n; };
-const fmt = (n) => isNaN(n) ? "" : String(Math.round(n * 100) / 100);
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const f = (v: any, d = 0) => { const n = parseFloat(v); return isNaN(n) ? d : n; };
+const fmt = (n: number) => isNaN(n) ? "" : String(Math.round(n * 100) / 100);
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+type IngRow = { bakers: string; true: string; weight: string };
+type IngMap = Record<string, IngRow>;
 
 // ── Modal wrapper ─────────────────────────────────────────────────────────────
-function Modal({ title, onClose, children, footer, wide }) {
+function Modal({ title, onClose, children, footer, wide }: {
+  title: string; onClose: () => void; children: React.ReactNode;
+  footer?: React.ReactNode; wide?: boolean;
+}) {
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className={`modal${wide ? " recipe-modal" : ""}`}>
@@ -227,22 +290,50 @@ function Modal({ title, onClose, children, footer, wide }) {
   );
 }
 
+// ── Admin password prompt ─────────────────────────────────────────────────────
+function AdminPrompt({ message, onConfirm, onCancel }: {
+  message: string; onConfirm: () => void; onCancel: () => void;
+}) {
+  const [pw, setPw] = useState("");
+  const [err, setErr] = useState("");
+  const ADMIN_PW = "8707";
+  const attempt = () => {
+    if (pw === ADMIN_PW) { onConfirm(); }
+    else { setErr("Incorrect password."); setPw(""); }
+  };
+  return (
+    <div className="admin-overlay">
+      <div className="admin-card">
+        <div className="admin-title">🔒 Admin Verification</div>
+        <div className="admin-sub">{message}</div>
+        <input className="admin-input" type="password" placeholder="Admin password"
+          value={pw} autoFocus
+          onChange={e => { setPw(e.target.value); setErr(""); }}
+          onKeyDown={e => e.key === "Enter" && attempt()} />
+        <div className="admin-err">{err}</div>
+        <div className="admin-btns">
+          <button className="btn btn-red btn-small" style={{flex:1}} onClick={attempt}>Confirm</button>
+          <button className="btn btn-gray btn-small" style={{flex:1}} onClick={onCancel}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── FF Calculator ─────────────────────────────────────────────────────────────
-function FFCalc({ onClose, onResult }) {
+function FFCalc({ onClose, onResult }: { onClose: () => void; onResult: (v: number) => void }) {
   const [wt, setWt] = useState(""); const [ft, setFt] = useState(""); const [adt, setAdt] = useState("");
   const [result, setResult] = useState("");
   const calc = () => {
     try {
       const r = (3 * f(adt)) - f(ft) - f(wt) - f(ft);
-      const res = fmt(r);
-      setResult(res);
-      onResult(r);
+      setResult(fmt(r)); onResult(r);
     } catch { setResult("Error"); }
   };
   return (
     <Modal title="01. FF Calculator" onClose={onClose}
       footer={<><button className="btn btn-green" onClick={calc}>Calculate</button><button className="btn btn-red" onClick={onClose}>Close</button></>}>
-      {[["01. WT", wt, setWt], ["02. FT", ft, setFt], ["03. ADT", adt, setAdt]].map(([l, v, s]) => (
+      {([["01. WT", wt, setWt], ["02. FT", ft, setFt], ["03. ADT", adt, setAdt]] as [string,string,React.Dispatch<React.SetStateAction<string>>][]).map(([l, v, s]) => (
         <div className="form-row" key={l}>
           <span className="form-label">{l}</span>
           <input className="form-input" type="number" value={v} onChange={e => s(e.target.value)} placeholder="0.00" />
@@ -257,21 +348,19 @@ function FFCalc({ onClose, onResult }) {
 }
 
 // ── Water Temp Calculator ─────────────────────────────────────────────────────
-function WaterTempCalc({ onClose, lastFF, onResult }) {
+function WaterTempCalc({ onClose, lastFF, onResult }: { onClose: () => void; lastFF: number; onResult: (v: number) => void }) {
   const [ddt, setDdt] = useState(""); const [rt, setRt] = useState(""); const [ft, setFt] = useState("");
   const [ff, setFf] = useState(""); const [result, setResult] = useState("");
   const calc = () => {
     try {
       const r = (3 * f(ddt)) - f(rt) - f(ft) - f(ff);
-      const res = fmt(r);
-      setResult(res);
-      onResult(r);
+      setResult(fmt(r)); onResult(r);
     } catch { setResult("Error"); }
   };
   return (
     <Modal title="02. Water Temp Calculator" onClose={onClose}
       footer={<><button className="btn btn-teal" onClick={calc}>Calculate</button><button className="btn btn-red" onClick={onClose}>Close</button></>}>
-      {[["01. DDT", ddt, setDdt], ["02. RT", rt, setRt], ["03. FT", ft, setFt]].map(([l, v, s]) => (
+      {([["01. DDT", ddt, setDdt], ["02. RT", rt, setRt], ["03. FT", ft, setFt]] as [string,string,React.Dispatch<React.SetStateAction<string>>][]).map(([l, v, s]) => (
         <div className="form-row" key={l}>
           <span className="form-label">{l}</span>
           <input className="form-input" type="number" value={v} onChange={e => s(e.target.value)} placeholder="0.00" />
@@ -291,7 +380,7 @@ function WaterTempCalc({ onClose, lastFF, onResult }) {
 }
 
 // ── Ice Temp Calculator ───────────────────────────────────────────────────────
-function IceTempCalc({ onClose, lastWT }) {
+function IceTempCalc({ onClose, lastWT }: { onClose: () => void; lastWT: number }) {
   const [reqWater, setReqWater] = useState(""); const [wt, setWt] = useState("");
   const [calWt, setCalWt] = useState(""); const [iceRes, setIceRes] = useState(""); const [waterRes, setWaterRes] = useState("");
   const calc = () => {
@@ -299,34 +388,21 @@ function IceTempCalc({ onClose, lastWT }) {
       const rw = f(reqWater), w = f(wt), c = f(calWt);
       if ((w + 80) === 0) { setIceRes("Div/0"); setWaterRes("Error"); return; }
       const ice = rw * (w - c) / (w + 80);
-      const water = rw - ice;
-      setIceRes(fmt(ice)); setWaterRes(fmt(water));
+      setIceRes(fmt(ice)); setWaterRes(fmt(rw - ice));
     } catch { setIceRes("Error"); setWaterRes("Error"); }
   };
   return (
     <Modal title="03. Ice Temp Calculator" onClose={onClose}
       footer={<><button className="btn btn-blue" onClick={calc}>Calculate</button><button className="btn btn-red" onClick={onClose}>Close</button></>}>
-      <div className="form-row">
-        <span className="form-label">01. Req Water Wt</span>
-        <input className="form-input" type="number" value={reqWater} onChange={e => setReqWater(e.target.value)} placeholder="0.00" />
-      </div>
-      <div className="form-row">
-        <span className="form-label">02. WT</span>
-        <input className="form-input" type="number" value={wt} onChange={e => setWt(e.target.value)} placeholder="0.00" />
-      </div>
+      <div className="form-row"><span className="form-label">01. Req Water Wt</span><input className="form-input" type="number" value={reqWater} onChange={e => setReqWater(e.target.value)} placeholder="0.00" /></div>
+      <div className="form-row"><span className="form-label">02. WT</span><input className="form-input" type="number" value={wt} onChange={e => setWt(e.target.value)} placeholder="0.00" /></div>
       <div className="form-row">
         <span className="form-label">03. Cal WT</span>
         <input className="form-input" type="number" value={calWt} onChange={e => setCalWt(e.target.value)} placeholder="0.00" style={{flex:1}} />
         <button className="get-btn" onClick={() => setCalWt(fmt(lastWT))}>Get WT</button>
       </div>
-      <div className="form-row">
-        <span className="form-label">04. Calc Ice Wt</span>
-        <input className="form-input" readOnly value={iceRes} placeholder="—" />
-      </div>
-      <div className="form-row">
-        <span className="form-label">05. Calc Water Wt</span>
-        <input className="form-input" readOnly value={waterRes} placeholder="—" />
-      </div>
+      <div className="form-row"><span className="form-label">04. Calc Ice Wt</span><input className="form-input" readOnly value={iceRes} placeholder="—" /></div>
+      <div className="form-row"><span className="form-label">05. Calc Water Wt</span><input className="form-input" readOnly value={waterRes} placeholder="—" /></div>
     </Modal>
   );
 }
@@ -335,47 +411,52 @@ function IceTempCalc({ onClose, lastWT }) {
 const DEFAULT_SPONGE = ["Flour", "Water", "Yeast"];
 const DEFAULT_DOUGH  = ["Flour", "Water", "Sugar", "Shortening", "MSNF"];
 
-function makeIngMap(names) {
-  const m = {};
+function makeIngMap(names: string[]): IngMap {
+  const m: IngMap = {};
   names.forEach(n => { m[n] = { bakers: "", true: "", weight: "" }; });
   return m;
 }
 
-function RecipeCalc({ onClose, db, setDb }) {
-  const [activeLabel, setActiveLabel]   = useState("New Formulation");
-  const [autoCal, setAutoCal]           = useState(false);
-  const [totalWt, setTotalWt]           = useState("");
-  const [totalFlour, setTotalFlour]     = useState("0.00");
-  const [totalWater, setTotalWater]     = useState("0.00");
-  const [totBakers, setTotBakers]       = useState("0.00");
-  const [totTrue, setTotTrue]           = useState("0.00");
-  const [totWeight, setTotWeight]       = useState("0.00");
-  const [trueWarn, setTrueWarn]         = useState(false);
-  const [sponge, setSponge]             = useState(() => makeIngMap(DEFAULT_SPONGE));
-  const [dough, setDough]               = useState(() => makeIngMap(DEFAULT_DOUGH));
-  const [view, setView]                 = useState("calc"); // calc | save | load | preview
-  const [previewKey, setPreviewKey]     = useState(null);
+function RecipeCalc({ onClose, db, setDb }: { onClose: () => void; db: any; setDb: (d: any) => void }) {
+  const [activeLabel, setActiveLabel]     = useState("New Formulation");
+  const [autoCal, setAutoCal]             = useState(false);
+  const [totalWt, setTotalWt]             = useState("");
+  const [totalFlour, setTotalFlour]       = useState("0.00");
+  const [totalWater, setTotalWater]       = useState("0.00");
+  const [totBakers, setTotBakers]         = useState("0.00");
+  const [totTrue, setTotTrue]             = useState("0.00");
+  const [totWeight, setTotWeight]         = useState("0.00");
+  const [trueWarn, setTrueWarn]           = useState(false);
+  const [sponge, setSponge]               = useState<IngMap>(() => makeIngMap(DEFAULT_SPONGE));
+  const [dough, setDough]                 = useState<IngMap>(() => makeIngMap(DEFAULT_DOUGH));
+  const [view, setView]                   = useState("calc");
+  const [previewKey, setPreviewKey]       = useState<string | null>(null);
   const [saveNameInput, setSaveNameInput] = useState("");
-  const [newIngSection, setNewIngSection] = useState(null);
-  const [newIngName, setNewIngName]     = useState("");
+  const [newIngSection, setNewIngSection] = useState<string | null>(null);
+  const [newIngName, setNewIngName]       = useState("");
+  // rename state: { sec: "Sponge"|"Dough", name: string }
+  const [renamingKey, setRenamingKey]     = useState<{sec:string;name:string}|null>(null);
+  const [renameVal, setRenameVal]         = useState("");
+  // admin delete prompt
+  const [adminPrompt, setAdminPrompt]     = useState<{key:string}|null>(null);
   const calcRef = useRef(false);
+  const holdTimers = useRef<Record<string,any>>({});
 
   // ── Calculation engine ──────────────────────────────────────────────────────
   const runCalc = useCallback((
-    tWt, spongeMap, doughMap,
-    trigField = null, trigIng = null, trigSec = null
+    tWt: string, spongeMap: IngMap, doughMap: IngMap,
+    trigField: string|null = null, trigIng: string|null = null, trigSec: string|null = null
   ) => {
-    const _f = (v) => { const n = parseFloat(v); return (isNaN(n) || !isFinite(n)) ? 0 : n; };
+    const _f = (v: any) => { const n = parseFloat(v); return (isNaN(n) || !isFinite(n)) ? 0 : n; };
 
-    const spongeHas = Object.values(spongeMap).some(r => r.bakers || r.true || r.weight);
-    const doughHas  = Object.values(doughMap).some(r => r.bakers || r.true || r.weight);
+    const spongeHas = Object.values(spongeMap).some((r: any) => r.bakers || r.true || r.weight);
+    const doughHas  = Object.values(doughMap).some((r: any) => r.bakers || r.true || r.weight);
 
-    const newS = JSON.parse(JSON.stringify(spongeMap));
-    const newD = JSON.parse(JSON.stringify(doughMap));
+    const newS: IngMap = JSON.parse(JSON.stringify(spongeMap));
+    const newD: IngMap = JSON.parse(JSON.stringify(doughMap));
 
     let totalDoughWeight = _f(tWt);
 
-    // STEP 3: True% → Bakers%
     if (trigField === "true" && trigIng && trigSec) {
       const target = trigSec === "Sponge" ? newS : newD;
       if (target[trigIng]) {
@@ -384,13 +465,10 @@ function RecipeCalc({ onClose, db, setDb }) {
         for (const sec of [newS, newD]) {
           if (sec["Flour"]) { const c = _f(sec["Flour"].true); if (c > 0) { flourTruePct = c; break; } }
         }
-        if (flourTruePct > 0 && ingTrueVal > 0) {
-          target[trigIng].bakers = fmt((ingTrueVal / flourTruePct) * 100);
-        }
+        if (flourTruePct > 0 && ingTrueVal > 0) target[trigIng].bakers = fmt((ingTrueVal / flourTruePct) * 100);
       }
     }
 
-    // STEP 4: True% + Weight → Total Dough Weight
     if ((trigField === "weight" || trigField === "true") && trigIng && trigSec) {
       const target = trigSec === "Sponge" ? newS : newD;
       if (target[trigIng]) {
@@ -399,39 +477,33 @@ function RecipeCalc({ onClose, db, setDb }) {
           const derived = (rowWt / rowTrue) * 100;
           const newTw = fmt(derived);
           if (totalDoughWeight === 0 || newTw !== fmt(totalDoughWeight)) {
-            totalDoughWeight = derived;
-            setTotalWt(newTw);
+            totalDoughWeight = derived; setTotalWt(newTw);
           }
         }
       }
     }
 
-    // STEP 5: Flour auto-100% for dough-only
     if (!spongeHas && doughHas && newD["Flour"]) {
       if (!(trigField === "bakers" && trigIng === "Flour" && trigSec === "Dough")) {
         if (_f(newD["Flour"].bakers) === 0) newD["Flour"].bakers = "100.00";
       }
     }
 
-    // STEP 6: Total bakers sum (sponge water excluded)
     let totalBakersSum = 0;
     Object.entries(newS).forEach(([n, r]) => { if (n !== "Water") totalBakersSum += _f(r.bakers); });
-    Object.values(newD).forEach(r => { totalBakersSum += _f(r.bakers); });
+    Object.values(newD).forEach((r: any) => { totalBakersSum += _f(r.bakers); });
     if (totalBakersSum === 0) totalBakersSum = 100;
 
-    // STEP 7: full matrix
     let runTrueSum = 0, runFlourWt = 0, runWaterWt = 0, totalAccumWt = 0;
 
-    for (const [secName, secMap] of [["Sponge", newS], ["Dough", newD]]) {
+    for (const [secName, secMap] of [["Sponge", newS], ["Dough", newD]] as [string, IngMap][]) {
       for (const [name, row] of Object.entries(secMap)) {
         let bVal = _f(row.bakers), tVal = _f(row.true), wVal = _f(row.weight);
-        const ownB = trigField === "bakers" && trigIng === name && trigSec === secName;
         const ownT = trigField === "true"   && trigIng === name && trigSec === secName;
         const ownW = trigField === "weight" && trigIng === name && trigSec === secName;
 
-        // Derive true from bakers
         if (bVal > 0 && !ownT) {
-          let compTrue;
+          let compTrue: number;
           if (name === "Water" && secName === "Sponge") {
             const sfb = _f(newS["Flour"]?.bakers ?? 0);
             compTrue = totalBakersSum > 0 ? (sfb * bVal) / totalBakersSum : 0;
@@ -447,7 +519,6 @@ function RecipeCalc({ onClose, db, setDb }) {
           tVal = compTrue;
         }
 
-        // Weight from true
         if (tVal > 0 && totalDoughWeight > 0 && !ownW) {
           const cw = (totalDoughWeight * tVal) / 100;
           const nw = cw > 0 ? fmt(cw) : "";
@@ -463,7 +534,7 @@ function RecipeCalc({ onClose, db, setDb }) {
         tVal = _f(row.true); wVal = _f(row.weight);
         if (name.toLowerCase() === "flour") runFlourWt += wVal;
         if (name.toLowerCase() === "water") runWaterWt += wVal;
-        runTrueSum  += tVal;
+        runTrueSum   += tVal;
         totalAccumWt += wVal;
       }
     }
@@ -471,26 +542,24 @@ function RecipeCalc({ onClose, db, setDb }) {
     setTotalFlour(fmt(runFlourWt) || "0.00");
     setTotalWater(fmt(runWaterWt) || "0.00");
     if (trigField !== "total_weight" && totalAccumWt > 0 && totalDoughWeight === 0) {
-      const newTw = fmt(totalAccumWt);
-      setTotalWt(newTw);
+      setTotalWt(fmt(totalAccumWt));
     }
     setTotBakers(fmt(totalBakersSum));
     setTotTrue(fmt(runTrueSum));
     setTotWeight(fmt(totalAccumWt));
     setTrueWarn(runTrueSum > 0 && !(runTrueSum >= 99 && runTrueSum <= 100.01));
-
     setSponge(newS);
     setDough(newD);
   }, []);
 
-  const triggerCalc = (field, ing, sec, spongeMap, doughMap, tw) => {
+  const triggerCalc = (field: string|null, ing: string|null, sec: string|null, spongeMap?: IngMap, doughMap?: IngMap, tw?: string) => {
     if (calcRef.current) return;
     calcRef.current = true;
     runCalc(tw ?? totalWt, spongeMap ?? sponge, doughMap ?? dough, field, ing, sec);
     calcRef.current = false;
   };
 
-  const handleIngChange = (sec, name, key, val) => {
+  const handleIngChange = (sec: string, name: string, key: string, val: string) => {
     const prev = sec === "Sponge" ? { ...sponge } : { ...dough };
     prev[name] = { ...prev[name], [key]: val };
     if (sec === "Sponge") setSponge(prev); else setDough(prev);
@@ -502,22 +571,51 @@ function RecipeCalc({ onClose, db, setDb }) {
     }
   };
 
-  const handleTotalWtChange = (val) => {
+  const handleTotalWtChange = (val: string) => {
     setTotalWt(val);
     if (autoCal) setTimeout(() => triggerCalc("total_weight", null, null, sponge, dough, val), 0);
   };
 
+  // ── Delete ingredient ───────────────────────────────────────────────────────
+  const deleteIngredient = (sec: string, name: string) => {
+    if (sec === "Sponge") {
+      setSponge(prev => { const n = { ...prev }; delete n[name]; return n; });
+    } else {
+      setDough(prev => { const n = { ...prev }; delete n[name]; return n; });
+    }
+  };
+
+  // ── Rename ingredient ───────────────────────────────────────────────────────
+  const startRename = (sec: string, name: string) => {
+    setRenamingKey({ sec, name });
+    setRenameVal(name);
+  };
+
+  const commitRename = () => {
+    if (!renamingKey) return;
+    const newName = renameVal.trim();
+    if (!newName || newName === renamingKey.name) { setRenamingKey(null); return; }
+    const rebuild = (map: IngMap): IngMap => {
+      const result: IngMap = {};
+      Object.keys(map).forEach(k => { result[k === renamingKey.name ? newName : k] = map[k]; });
+      return result;
+    };
+    if (renamingKey.sec === "Sponge") setSponge(rebuild(sponge));
+    else setDough(rebuild(dough));
+    setRenamingKey(null);
+  };
+
+  // ── Add ingredient ──────────────────────────────────────────────────────────
   const addIngredient = () => {
-    const n = newIngName.trim();
-    if (!n) return;
+    const n = newIngName.trim(); if (!n) return;
     if (newIngSection === "sponge") setSponge(p => ({ ...p, [n]: { bakers:"", true:"", weight:"" } }));
     else setDough(p => ({ ...p, [n]: { bakers:"", true:"", weight:"" } }));
     setNewIngName(""); setNewIngSection(null);
   };
 
-  // ── SAVE ──
+  // ── Collect rows for save ───────────────────────────────────────────────────
   const collectRows = () => {
-    const rows = [];
+    const rows: string[][] = [];
     Object.entries(sponge).forEach(([n, r]) => {
       if (r.bakers || r.true || r.weight) rows.push(["Sponge", n, r.bakers||"0.00", r.true||"0.00", r.weight||"0.00"]);
     });
@@ -527,6 +625,7 @@ function RecipeCalc({ onClose, db, setDb }) {
     return rows;
   };
 
+  // ── Save ────────────────────────────────────────────────────────────────────
   const saveRecipe = () => {
     const n = saveNameInput.trim(); if (!n) return;
     const rows = collectRows();
@@ -540,18 +639,21 @@ function RecipeCalc({ onClose, db, setDb }) {
     setActiveLabel(n); setSaveNameInput(""); setView("calc");
   };
 
-  const deleteRecipe = (key) => {
+  // ── Delete recipe (admin protected) ────────────────────────────────────────
+  const deleteRecipe = (key: string) => {
     const newDb = { ...db }; delete newDb[key];
     setDb(newDb);
     try { localStorage.setItem("recipes_db", JSON.stringify(newDb)); } catch {}
+    setAdminPrompt(null);
     setView("load");
   };
 
-  const loadRecipe = (key) => {
+  // ── Load recipe ─────────────────────────────────────────────────────────────
+  const loadRecipe = (key: string) => {
     const rec = db[key]; if (!rec) return;
     const newS = makeIngMap(DEFAULT_SPONGE);
     const newD = makeIngMap(DEFAULT_DOUGH);
-    rec.dataset.forEach(([sec, name, bp, tp, wt]) => {
+    rec.dataset.forEach(([sec, name, bp, tp, wt]: string[]) => {
       const target = sec === "Sponge" ? newS : newD;
       if (!target[name]) target[name] = { bakers:"", true:"", weight:"" };
       target[name] = { bakers: bp, true: tp, weight: wt };
@@ -562,32 +664,61 @@ function RecipeCalc({ onClose, db, setDb }) {
     setActiveLabel(key); setView("calc");
   };
 
-  const rows = collectRows();
-
   // ── Section renderer ────────────────────────────────────────────────────────
-  const renderSection = (title, map, secName) => (
+  const renderSection = (title: string, map: IngMap, secName: string) => (
     <>
       <div className="section-hdr">
-        <span style={{color: "var(--cyan)"}}>{title}</span>
+        <span style={{color:"var(--cyan)"}}>{title}</span>
         <span style={{textAlign:"center"}}>Bakers %</span>
         <span style={{textAlign:"center"}}>True %</span>
         <span style={{textAlign:"center"}}>Weight</span>
+        <span></span>
       </div>
-      {Object.entries(map).map(([name, row]) => (
-        <div className="ing-row" key={name}>
-          <span className="ing-name">{name}</span>
-          {["bakers","true","weight"].map(k => (
-            <input key={k} className="ing-input" type="number" value={row[k]}
-              onChange={e => handleIngChange(secName, name, k, e.target.value)}
-              placeholder="0.00" />
-          ))}
-        </div>
-      ))}
+      {Object.entries(map).map(([name, row]) => {
+        const isRenaming = renamingKey?.sec === secName && renamingKey?.name === name;
+        const holdKey = `${secName}__${name}`;
+        return (
+          <div className="ing-outer" key={name}>
+            <div className="ing-row">
+              <div className="ing-name-wrap">
+                {isRenaming
+                  ? <input
+                      className="ing-name-edit"
+                      autoFocus
+                      value={renameVal}
+                      onChange={e => setRenameVal(e.target.value)}
+                      onBlur={commitRename}
+                      onKeyDown={e => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") setRenamingKey(null); }}
+                    />
+                  : <span
+                      className="ing-name"
+                      title="Hold to rename"
+                      onMouseDown={() => { holdTimers.current[holdKey] = setTimeout(() => startRename(secName, name), 600); }}
+                      onMouseUp={() => clearTimeout(holdTimers.current[holdKey])}
+                      onMouseLeave={() => clearTimeout(holdTimers.current[holdKey])}
+                      onTouchStart={() => { holdTimers.current[holdKey] = setTimeout(() => startRename(secName, name), 600); }}
+                      onTouchEnd={() => clearTimeout(holdTimers.current[holdKey])}
+                    >{name}</span>
+                }
+              </div>
+              {(["bakers","true","weight"] as const).map(k => (
+                <input key={k} className="ing-input" type="number" value={row[k]}
+                  onChange={e => handleIngChange(secName, name, k, e.target.value)}
+                  placeholder="0.00" />
+              ))}
+              <button className="del-btn" title="Delete ingredient"
+                onClick={() => deleteIngredient(secName, name)}>🗑</button>
+            </div>
+          </div>
+        );
+      })}
       <button className="add-ing-btn" onClick={() => { setNewIngSection(secName.toLowerCase()); setNewIngName(""); }}>
         + Add Ingredient ({secName})
       </button>
     </>
   );
+
+  const rows = collectRows();
 
   // ── Views ───────────────────────────────────────────────────────────────────
   if (view === "save") return (
@@ -623,17 +754,26 @@ function RecipeCalc({ onClose, db, setDb }) {
   if (view === "preview" && previewKey) {
     const rec = db[previewKey];
     return (
-      <Modal title={`Preview: ${previewKey}`} onClose={() => setView("load")} wide
-        footer={<>
-          <button className="btn btn-blue" onClick={() => loadRecipe(previewKey)}>Load</button>
-          <button className="btn btn-red" onClick={() => deleteRecipe(previewKey)}>Delete</button>
-          <button className="btn btn-gray" onClick={() => setView("load")}>Back</button>
-        </>}>
-        <table className="preview-table">
-          <thead><tr><th>Ingredient</th><th>Bakers %</th><th>True %</th><th>Weight</th></tr></thead>
-          <tbody>{rec.dataset.map(([sec,n,b,t,w],i) => <tr key={i}><td>{n} ({sec})</td><td>{b}</td><td>{t}</td><td>{w}</td></tr>)}</tbody>
-        </table>
-      </Modal>
+      <>
+        {adminPrompt && (
+          <AdminPrompt
+            message={`Enter admin password to delete "${adminPrompt.key}"`}
+            onConfirm={() => deleteRecipe(adminPrompt.key)}
+            onCancel={() => setAdminPrompt(null)}
+          />
+        )}
+        <Modal title={`Preview: ${previewKey}`} onClose={() => setView("load")} wide
+          footer={<>
+            <button className="btn btn-blue" onClick={() => loadRecipe(previewKey)}>Load</button>
+            <button className="btn btn-red" onClick={() => setAdminPrompt({ key: previewKey })}>Delete</button>
+            <button className="btn btn-gray" onClick={() => setView("load")}>Back</button>
+          </>}>
+          <table className="preview-table">
+            <thead><tr><th>Ingredient</th><th>Bakers %</th><th>True %</th><th>Weight</th></tr></thead>
+            <tbody>{rec.dataset.map(([sec,n,b,t,w]: string[], i: number) => <tr key={i}><td>{n} ({sec})</td><td>{b}</td><td>{t}</td><td>{w}</td></tr>)}</tbody>
+          </table>
+        </Modal>
+      </>
     );
   }
 
@@ -667,20 +807,25 @@ function RecipeCalc({ onClose, db, setDb }) {
         </label>
       </div>
 
+      {/* TOTALS BAR — now responsive */}
       <div className="totals-bar">
-        {[["Total Wt", totalWt, setTotalWtWrapper, false], ["Total Flour", totalFlour, null, true], ["Total Water", totalWater, null, true]].map(([l,v,s,ro]) => (
-          <div className="total-cell" key={l}>
-            <label>{l}</label>
-            <input type="number" value={v} readOnly={ro}
-              onChange={ro ? undefined : e => handleTotalWtChange(e.target.value)}
-              placeholder="0.00" />
-          </div>
-        ))}
+        <div className="total-cell">
+          <label>TOTAL WT</label>
+          <input type="number" value={totalWt} onChange={e => handleTotalWtChange(e.target.value)} placeholder="0.00" />
+        </div>
+        <div className="total-cell">
+          <label>TOTAL FLOUR</label>
+          <input type="number" readOnly value={totalFlour} placeholder="0.00" />
+        </div>
+        <div className="total-cell">
+          <label>TOTAL WATER</label>
+          <input type="number" readOnly value={totalWater} placeholder="0.00" />
+        </div>
       </div>
 
       <div style={{maxHeight:"42vh", overflowY:"auto", paddingRight:2}}>
         {renderSection("Sponge Section", sponge, "Sponge")}
-        {renderSection("Dough Section", dough, "Dough")}
+        {renderSection("Dough / Batter Section", dough, "Dough")}
 
         <div className="summary-row">
           <span className="summary-label">Total</span>
@@ -691,16 +836,15 @@ function RecipeCalc({ onClose, db, setDb }) {
       </div>
     </Modal>
   );
-
-  function setTotalWtWrapper(val) { handleTotalWtChange(val); }
 }
 
 // ── Main App ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen]   = useState("login");
-  const [userInput, setUser]  = useState(""); const [passInput, setPass] = useState("");
+  const [userInput, setUser]  = useState("");
+  const [passInput, setPass]  = useState("");
   const [loginErr, setErr]    = useState("");
-  const [modal, setModal]     = useState(null);
+  const [modal, setModal]     = useState<string|null>(null);
   const [lastFF, setLastFF]   = useState(0);
   const [lastWT, setLastWT]   = useState(0);
   const [db, setDb]           = useState(() => {
@@ -708,16 +852,16 @@ export default function App() {
   });
 
   const login = () => {
-    const USERS = { admin: "8707", user: "ufm46" };
+    const USERS: Record<string,string> = { admin: "8707", user: "ufm46" };
     if (USERS[userInput] && USERS[userInput] === passInput) { setScreen("dashboard"); setErr(""); }
     else setErr("Invalid username or password.");
   };
 
   const cards = [
-    { num:"01", title:"FF Calculator",          sub:"Friction factor from WT, FT & ADT",     color:"#1a6fa8", key:"ff" },
-    { num:"02", title:"Water Temp Calculator",  sub:"Calculate water temperature (Cal WT)",  color:"#136b6b", key:"wt" },
-    { num:"03", title:"Ice Temp Calculator",    sub:"Calc ice weight & remaining water",      color:"#1a5a7f", key:"ice" },
-    { num:"04", title:"Recipe Calculator",      sub:"Bidirectional bakers % matrix",          color:"#3a3570", key:"recipe" },
+    { num:"01", title:"FF Calculator",         sub:"Friction factor from WT, FT & ADT",    color:"#1a6fa8", key:"ff" },
+    { num:"02", title:"Water Temp Calculator", sub:"Calculate water temperature (Cal WT)", color:"#136b6b", key:"wt" },
+    { num:"03", title:"Ice Temp Calculator",   sub:"Calc ice weight & remaining water",     color:"#1a5a7f", key:"ice" },
+    { num:"04", title:"Recipe Calculator",     sub:"Bidirectional bakers % matrix",         color:"#3a3570", key:"recipe" },
   ];
 
   return (
@@ -751,10 +895,10 @@ export default function App() {
           </div>
           <div className="grid-2x2">
             {cards.map(c => (
-              <div key={c.key} className="calc-card" style={{"--accent": c.color}}
+              <div key={c.key} className="calc-card"
                 onClick={() => setModal(c.key)}>
                 <div className="card-num">{c.num}</div>
-                <div className="card-title" style={{color: "var(--text)"}}>{c.title}</div>
+                <div className="card-title" style={{color:"var(--text)"}}>{c.title}</div>
                 <div className="card-sub">{c.sub}</div>
               </div>
             ))}
@@ -762,10 +906,10 @@ export default function App() {
         </div>
       )}
 
-      {modal === "ff"     && <FFCalc      onClose={() => setModal(null)} onResult={setLastFF} />}
+      {modal === "ff"     && <FFCalc        onClose={() => setModal(null)} onResult={setLastFF} />}
       {modal === "wt"     && <WaterTempCalc onClose={() => setModal(null)} lastFF={lastFF} onResult={setLastWT} />}
-      {modal === "ice"    && <IceTempCalc  onClose={() => setModal(null)} lastWT={lastWT} />}
-      {modal === "recipe" && <RecipeCalc   onClose={() => setModal(null)} db={db} setDb={setDb} />}
+      {modal === "ice"    && <IceTempCalc   onClose={() => setModal(null)} lastWT={lastWT} />}
+      {modal === "recipe" && <RecipeCalc    onClose={() => setModal(null)} db={db} setDb={setDb} />}
     </>
   );
 }
