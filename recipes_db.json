@@ -184,5 +184,77 @@
     },
     "savedBy": "admin",
     "savedAt": "2026-06-26T16:37:04.036Z"
+  },
+  "Bread exam draft 1": {
+    "dataset": [
+      [
+        "Dough",
+        "Flour",
+        "100",
+        "0.00",
+        "0.00"
+      ],
+      [
+        "Dough",
+        "Water",
+        "48",
+        "0.00",
+        "0.00"
+      ],
+      [
+        "Dough",
+        "Sugar",
+        "15",
+        "0.00",
+        "0.00"
+      ],
+      [
+        "Dough",
+        "Shortening",
+        "10",
+        "0.00",
+        "0.00"
+      ],
+      [
+        "Dough",
+        "MSNF",
+        "4",
+        "0.00",
+        "0.00"
+      ],
+      [
+        "Dough",
+        "Yeast",
+        "1.5",
+        "0.00",
+        "0.00"
+      ],
+      [
+        "Dough",
+        "Salt",
+        "1.5",
+        "0.00",
+        "0.00"
+      ],
+      [
+        "Dough",
+        "Egg",
+        "1",
+        "0.00",
+        "0.00"
+      ]
+    ],
+    "top_totals": {
+      "weight": "",
+      "flour": "0.00",
+      "water": "0.00"
+    },
+    "bottom_totals": {
+      "bakers": "0.00",
+      "true": "0.00",
+      "weight": "0.00"
+    },
+    "savedBy": "admin",
+    "savedAt": "2026-07-02T05:45:32.713Z"
   }
 }
